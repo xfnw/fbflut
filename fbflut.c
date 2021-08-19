@@ -11,7 +11,7 @@
 #include <linux/fb.h>
 #include <unistd.h>
 
-int fbfd, fb_width, fb_height, fb_bytes;
+int fbfd, fb_width, fb_height, fb_length, fb_bytes;
 uint32_t *fbdata;
 
 char *safestrtok(char *str, const char *delim) {
@@ -45,11 +45,11 @@ void *handle_connection(void *socket_desc) {
 			if (xpos >= 0 && ypos >= 0 && xpos <= fb_width && ypos <= fb_height) {
 				if (color == 0) {
 					message = calloc(sizeof(char), 36);
-					asprintf(&message, "PX %i %i %X\n",xpos,ypos,fbdata[ypos*fb_width+xpos]);
+					asprintf(&message, "PX %i %i %X\n",xpos,ypos,fbdata[ypos*fb_length+xpos]);
 					write(sock, message, strlen(message));
 					continue;
 				} else {
-					fbdata[ypos*fb_width+xpos] = color;
+					fbdata[ypos*fb_length+xpos] = color;
 				}
 			}
 			continue;
@@ -85,12 +85,15 @@ int main(int argc, char *argv[]) {
 
 	if (fbfd >= 0) {
 		struct fb_var_screeninfo vinfo;
+		struct fb_fix_screeninfo finfo;
 
 		ioctl(fbfd, FBIOGET_VSCREENINFO, &vinfo);
+		ioctl(fbfd, FBIOGET_FSCREENINFO, &finfo);
 
 		fb_width = vinfo.xres;
 		fb_height = vinfo.yres;
 		fb_bytes = vinfo.bits_per_pixel / 8;
+		fb_length = finfo.line_length / fb_bytes;
 
 		printf("width: %i, height: %i, bpp: %i\n", fb_width, fb_height, fb_bytes);
 
