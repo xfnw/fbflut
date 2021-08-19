@@ -42,7 +42,7 @@ void *handle_connection(void *socket_desc) {
 			//	strcat(colorcode, "00");
 			int color = (int)strtol(colorcode, NULL, 16);
 
-			if (xpos >= 0 && ypos >= 0 && xpos <= fb_width && ypos <= fb_height) {
+			if (xpos >= 0 && ypos >= 0 && xpos < fb_width && ypos < fb_height) {
 				if (color == 0) {
 					message = calloc(sizeof(char), 36);
 					asprintf(&message, "PX %i %i %X\n",xpos,ypos,fbdata[ypos*fb_length+xpos]);
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 
 		printf("width: %i, height: %i, bpp: %i\n", fb_width, fb_height, fb_bytes);
 
-		int fb_data_size = fb_width * fb_height * fb_bytes;
+		int fb_data_size = fb_length * fb_height * fb_bytes;
 
 		fbdata = mmap(0, fb_data_size, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, (off_t)0);
 
