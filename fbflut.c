@@ -6,6 +6,7 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/mman.h>
 #include <arpa/inet.h>
 #include <linux/fb.h>
@@ -70,6 +71,7 @@ void *handle_connection(void *socket_desc) {
 		memset(client_message, 0, 36);
 	}
 
+	close(sock);
 	return 0;
 }
 
@@ -113,6 +115,11 @@ int main(int argc, char *argv[]) {
 		server.sin_family = AF_INET;
 		server.sin_addr.s_addr = INADDR_ANY;
 		server.sin_port = htons(port);
+
+		struct timeval tv;
+		tv.tv_sec = 60;
+		tv.tv_usec = 0;
+		setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
 		if (bind(socket_desc, (struct sockaddr *)&server, sizeof(server)) < 0)
 			return 15;
