@@ -14,6 +14,6 @@ framebuffer pixelflut server in C.
 
 ## caveats
 - this writes directly to your framebuffer, which might not use (aa)rrggbb (bbggrraa is somewhat common).
-  if you have alpha trailing at the end, uncomment lines `42` and `43` to allow omitting it in `PX` lines
+  if you have alpha trailing at the end, uncomment lines `42` and `43` to allow omitting it in `PX` commands
 - fbflut does not store its own buffer, the canvas is entirely stored in the framebuffer,
   so be weary of other programs writing to it as thats the only copy
