@@ -37,16 +37,19 @@ void *handle_connection(void *socket_desc) {
 			int xpos = atoi(safestrtok(NULL, " \n"));
 			int ypos = atoi(safestrtok(NULL, " \n"));
 			char colorcode[8];
-			strcpy(colorcode, safestrtok(NULL, " \n"));
+			strncpy(colorcode, safestrtok(NULL, " \n"), 8);
 			if (strlen(colorcode) < 2*fb_bytes)
-				strcat(colorcode, "FF");
+				strcat(colorcode, "00");
 			int color = (int)strtol(colorcode, NULL, 16);
 
 			if (xpos >= 0 && ypos >= 0 && xpos <= fb_width && ypos <= fb_height) {
-				if (color == 0 || 1) {
-					asprintf(&message, "PX %i %i %X\n",xpos,ypos,color);
+				if (color == 0) {
+					message = calloc(sizeof(char), 36);
+					asprintf(&message, "PX %i %i %X\n",xpos,ypos,fbdata[ypos*fb_width+xpos]);
 					write(sock, message, strlen(message));
 					continue;
+				} else {
+					fbdata[ypos*fb_width+xpos] = color;
 				}
 			}
 			continue;
@@ -58,7 +61,7 @@ void *handle_connection(void *socket_desc) {
 			continue;
 		}
 		if (!strcmp("HELP", command)) {
-			message = "HELP\nSIZE\nPX x y [rrggbb[aa]]\n";
+			message = "HELP\nSIZE\nPX x y [color]\n";
 			write(sock, message, strlen(message));
 			continue;
 		}
