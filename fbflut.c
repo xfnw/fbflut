@@ -27,6 +27,7 @@ void *handle_connection(void *socket_desc) {
 	char *message, *command, client_message[36];
 
 	while ((read_size = recv(sock, client_message, 36, MSG_PEEK)) > 0) {
+		client_message[read_size] = '\0';
 		read_to = (char *)strchrnul(client_message, '\n')-client_message;
 		memset(client_message, 0, 36);
 		read_size = recv(sock, client_message, read_to+1, 0);
