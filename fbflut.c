@@ -38,8 +38,8 @@ void *handle_connection(void *socket_desc) {
 			int ypos = atoi(safestrtok(NULL, " \n"));
 			char colorcode[8];
 			strncpy(colorcode, safestrtok(NULL, " \n"), 8);
-			if (strlen(colorcode) < 2*fb_bytes)
-				strcat(colorcode, "00");
+			//if (strlen(colorcode) < 2*fb_bytes)
+			//	strcat(colorcode, "00");
 			int color = (int)strtol(colorcode, NULL, 16);
 
 			if (xpos >= 0 && ypos >= 0 && xpos <= fb_width && ypos <= fb_height) {
