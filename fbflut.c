@@ -14,6 +14,13 @@
 int fbfd, fb_width, fb_height, fb_bytes;
 uint32_t *fbdata;
 
+char *safestrtok(char *str, const char *delim) {
+	char *result = strtok(str, delim);
+	if (result == NULL)
+		result="";
+	return result;
+}
+
 void *handle_connection(void *socket_desc) {
 	int sock = *(int*)socket_desc;
 	int read_size, read_to;
@@ -24,16 +31,23 @@ void *handle_connection(void *socket_desc) {
 		memset(client_message, 0, 36);
 		read_size = recv(sock, client_message, read_to+1, 0);
 
-		command = strtok(client_message, " \n");
-		if (command == NULL) continue;
+		command = safestrtok(client_message, " \n");
 
 		if (!strcmp("PX", command)) {
-			int xpos = atoi(strtok(NULL, " \n"));
-			int ypos = atoi(strtok(NULL, " \n"));
-			int color = (int)strtol(strtok(NULL, " \n"), NULL, 16);
+			int xpos = atoi(safestrtok(NULL, " \n"));
+			int ypos = atoi(safestrtok(NULL, " \n"));
+			char colorcode[8];
+			strcpy(colorcode, safestrtok(NULL, " \n"));
+			if (strlen(colorcode) < 2*fb_bytes)
+				strcat(colorcode, "FF");
+			int color = (int)strtol(colorcode, NULL, 16);
 
 			if (xpos >= 0 && ypos >= 0 && xpos <= fb_width && ypos <= fb_height) {
-				
+				if (color == 0 || 1) {
+					asprintf(&message, "PX %i %i %X\n",xpos,ypos,color);
+					write(sock, message, strlen(message));
+					continue;
+				}
 			}
 			continue;
 		}
