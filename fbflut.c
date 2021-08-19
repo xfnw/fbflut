@@ -16,11 +16,41 @@ uint32_t *fbdata;
 
 void *handle_connection(void *socket_desc) {
 	int sock = *(int*)socket_desc;
-	int read_size;
-	char *message, client_message[25];
+	int read_size, read_to;
+	char *message, *command, client_message[36];
 
-	message = "doug doug doug";
-	write(sock, message, strlen(message));
+	while ((read_size = recv(sock, client_message, 36, MSG_PEEK)) > 0) {
+		read_to = (char *)strchrnul(client_message, '\n')-client_message;
+		memset(client_message, 0, 36);
+		read_size = recv(sock, client_message, read_to+1, 0);
+
+		command = strtok(client_message, " \n");
+		if (command == NULL) continue;
+
+		if (!strcmp("PX", command)) {
+			int xpos = atoi(strtok(NULL, " \n"));
+			int ypos = atoi(strtok(NULL, " \n"));
+			int color = (int)strtol(strtok(NULL, " \n"), NULL, 16);
+
+			if (xpos >= 0 && ypos >= 0 && xpos <= fb_width && ypos <= fb_height) {
+				
+			}
+			continue;
+		}
+		if (!strcmp("SIZE", command)) {
+			message = calloc(sizeof(char), 36);
+			sprintf(message, "SIZE %i %i\n\0", fb_width, fb_height);
+			write(sock, message, strlen(message));
+			continue;
+		}
+		if (!strcmp("HELP", command)) {
+			message = "HELP\nSIZE\nPX x y [rrggbb[aa]]\n";
+			write(sock, message, strlen(message));
+			continue;
+		}
+
+		memset(client_message, 0, 36);
+	}
 
 	return 0;
 }
@@ -33,6 +63,9 @@ int main(int argc, char *argv[]) {
 		port = 1234;
 
 	fbfd = open("/dev/fb0", O_RDWR);
+
+	printf("\e[?25l");
+
 	if (fbfd >= 0) {
 		struct fb_var_screeninfo vinfo;
 
