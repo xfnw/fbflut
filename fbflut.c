@@ -40,17 +40,17 @@ void *handle_connection(void *socket_desc) {
 			int ypos = atoi(safestrtok(NULL, " \n"));
 			char colorcode[8];
 			strncpy(colorcode, safestrtok(NULL, " \n"), 8);
-			//if (strlen(colorcode) < 2*fb_bytes)
-			//	strcat(colorcode, "00");
-			int color = (int)strtol(colorcode, NULL, 16);
 
 			if (xpos >= 0 && ypos >= 0 && xpos < fb_width && ypos < fb_height) {
-				if (color == 0) {
+				if (strlen(colorcode) == 0) {
 					message = calloc(sizeof(char), 36);
 					asprintf(&message, "PX %i %i %X\n",xpos,ypos,fbdata[ypos*fb_length+xpos]);
 					write(sock, message, strlen(message));
 					continue;
 				} else {
+					//if (strlen(colorcode) < 2*fb_bytes)
+					//	strcat(colorcode, "00");
+					int color = (int)strtol(colorcode, NULL, 16);
 					fbdata[ypos*fb_length+xpos] = color;
 				}
 			}
