@@ -42,7 +42,7 @@ void *handle_connection(void *socket_desc) {
 			strncpy(colorcode, safestrtok(NULL, " \n"), 8);
 
 			if (xpos >= 0 && ypos >= 0 && xpos < fb_width && ypos < fb_height) {
-				if (strlen(colorcode) == 0) {
+				if (colorcode[0] == '\0') {
 					message = calloc(sizeof(char), 36);
 					asprintf(&message, "PX %i %i %X\n",xpos,ypos,fbdata[ypos*fb_length+xpos]);
 					write(sock, message, strlen(message));
