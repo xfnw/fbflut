@@ -25,7 +25,7 @@ char *safestrtok(char *str, const char *delim) {
 void *handle_connection(void *socket_desc) {
 	int sock = *(int*)socket_desc;
 	int read_size, read_to;
-	char *message, *command, client_message[36];
+	char *command, message[36], client_message[36];
 
 	while ((read_size = recv(sock, client_message, 36, MSG_PEEK)) > 0) {
 		client_message[read_size] = '\0';
@@ -43,8 +43,7 @@ void *handle_connection(void *socket_desc) {
 
 			if (xpos >= 0 && ypos >= 0 && xpos < fb_width && ypos < fb_height) {
 				if (colorcode[0] == '\0') {
-					message = calloc(sizeof(char), 36);
-					asprintf(&message, "PX %i %i %X\n",xpos,ypos,fbdata[ypos*fb_length+xpos]);
+					sprintf(message, "PX %i %i %X\n",xpos,ypos,fbdata[ypos*fb_length+xpos]);
 					write(sock, message, strlen(message));
 					continue;
 				} else {
@@ -57,13 +56,12 @@ void *handle_connection(void *socket_desc) {
 			continue;
 		}
 		if (!strcmp("SIZE", command)) {
-			message = calloc(sizeof(char), 36);
 			sprintf(message, "SIZE %i %i\n\0", fb_width, fb_height);
 			write(sock, message, strlen(message));
 			continue;
 		}
 		if (!strcmp("HELP", command)) {
-			message = "HELP\nSIZE\nPX x y [color]\n";
+			memcpy(message, "HELP\nSIZE\nPX x y [color]\n", 26);
 			write(sock, message, strlen(message));
 			continue;
 		}
