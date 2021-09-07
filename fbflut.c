@@ -6,10 +6,14 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/syscall.h>
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <arpa/inet.h>
 #include <linux/fb.h>
+#ifdef HAVE_LINUX_SECCOMP_H
+#include <linux/seccomp.h>
+#endif
 #include <unistd.h>
 
 int fbfd, fb_width, fb_height, fb_length, fb_bytes;
@@ -23,6 +27,10 @@ char *safestrtok(char *str, const char *delim) {
 }
 
 void *handle_connection(void *socket_desc) {
+#ifdef HAVE_LINUX_SECCOMP_H
+	syscall(SYS_seccomp, SECCOMP_SET_MODE_STRICT, 0);
+#endif
+
 	int sock = *(int*)socket_desc;
 	int read_size, read_to;
 	char *command, message[36], client_message[36];
