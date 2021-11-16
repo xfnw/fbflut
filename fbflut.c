@@ -7,6 +7,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
+#include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <arpa/inet.h>
@@ -94,6 +95,8 @@ void *handle_connection(void *socket_desc) {
 
 int main(int argc, char *argv[]) {
 	int port;
+
+	signal(SIGPIPE, SIG_IGN);
 
 	port = argc > 1 ? atoi(argv[1]) : 0;
 	if (!port)
