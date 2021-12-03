@@ -63,7 +63,7 @@ void *handle_connection(void *socket_desc) {
 
 			if (xpos >= 0 && ypos >= 0 && xpos < fb_width && ypos < fb_height) {
 				if (colorcode[0] == '\0') {
-					sprintf(message, "PX %i %i %X\n",xpos,ypos,fbdata[ypos*fb_length+xpos]);
+					sprintf(message, "PX %i %i %06X\n",xpos,ypos,fbdata[ypos*fb_length+xpos]);
 					write(sock, message, strlen(message));
 					continue;
 				} else {
