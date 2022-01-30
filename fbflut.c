@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
 
 		memset(fbdata, 0, fb_data_size); // clear the screen
 
-		
+
 		int socket_desc, client_sock, c;
 		struct sockaddr_in server, client;
 
