@@ -129,13 +129,13 @@ int main(int argc, char *argv[]) {
 
 
 		int socket_desc, client_sock, c;
-		struct sockaddr_in server, client;
+		struct sockaddr_in6 server, client;
 
-		socket_desc = socket(AF_INET, SOCK_STREAM, 0);
+		socket_desc = socket(AF_INET6, SOCK_STREAM, 0);
 
-		server.sin_family = AF_INET;
-		server.sin_addr.s_addr = INADDR_ANY;
-		server.sin_port = htons(port);
+		server.sin6_family = AF_INET6;
+		server.sin6_addr = in6addr_any;
+		server.sin6_port = htons(port);
 
 		struct timeval tv;
 		tv.tv_sec = 60;
