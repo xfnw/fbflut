@@ -77,7 +77,7 @@ void *handle_connection(void *socket_desc) {
 			continue;
 		}
 		if (!strcmp("SIZE", command)) {
-			sprintf(message, "SIZE %i %i\n\0", fb_width, fb_height);
+			sprintf(message, "SIZE %i %i\n", fb_width, fb_height);
 			write(sock, message, strlen(message));
 			continue;
 		}
