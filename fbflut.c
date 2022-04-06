@@ -1,8 +1,11 @@
 
+#define _GNU_SOURCE
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <pthread.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
@@ -34,20 +37,21 @@ void *handle_connection(void *socket_desc) {
 #endif
 
 	int sock = *(int*)socket_desc;
-	int read_size, read_to;
+	int read_size;
+	uintptr_t read_to;
 	char *command, message[36], client_message[36];
 
 	while ((read_size = recv(sock, client_message, 36, MSG_PEEK)) > 0) {
 		client_message[read_size] = '\0';
-		read_to = strchr(client_message, '\n');
+		read_to = (uintptr_t)(char *)strchr(client_message, '\n');
 		if (read_to == 0) {
 			if (read_size == 36) {
-				read_to = client_message+read_size;
+				read_to = (uintptr_t)(char *)client_message+read_size;
 			} else {
 				memset(client_message, 0, 36);
 				read_size = recv(sock, client_message, 36, MSG_PEEK | MSG_WAITALL);
 				client_message[read_size] = '\0';
-				read_to = strchrnul(client_message, '\n');
+				read_to = (uintptr_t)(char *)strchrnul(client_message, '\n');
 			}
 		}
 		read_to = (char *)read_to-client_message;
