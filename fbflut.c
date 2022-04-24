@@ -38,10 +38,12 @@ void *handle_connection(void *socket_desc) {
 
 	int sock = *(int*)socket_desc;
 	int read_size;
-	uintptr_t read_to;
-	char *command, message[36], client_message[36];
+	char message[37], client_message[37];
 
 	while ((read_size = recv(sock, client_message, 36, MSG_PEEK)) > 0) {
+		uintptr_t read_to;
+		char *command;
+
 		client_message[read_size] = '\0';
 		read_to = (uintptr_t)(char *)strchr(client_message, '\n');
 		if (read_to == 0) {
