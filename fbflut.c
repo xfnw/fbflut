@@ -153,9 +153,9 @@ int main(int argc, char *argv[]) {
 
 		listen(socket_desc, 100);
 		c = sizeof(struct sockaddr_in);
-		pthread_t thread_id;
 
 		while (client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) {
+			pthread_t thread_id;
 
 			pthread_create(&thread_id, NULL, handle_connection, (void*) &client_sock);
 
