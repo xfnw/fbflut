@@ -7,11 +7,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <pthread.h>
+#include <signal.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
-#include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <arpa/inet.h>
