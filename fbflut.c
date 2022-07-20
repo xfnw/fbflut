@@ -143,10 +143,12 @@ int main(int argc, char *argv[]) {
 		server.sin6_addr = in6addr_any;
 		server.sin6_port = htons(port);
 
-		struct timeval tv;
-		tv.tv_sec = 60;
-		tv.tv_usec = 0;
-		setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+		{
+			struct timeval tv;
+			tv.tv_sec = 60;
+			tv.tv_usec = 0;
+			setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+		}
 
 		if (bind(socket_desc, (struct sockaddr *)&server, sizeof(server)) < 0)
 			return 15;
