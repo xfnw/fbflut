@@ -1,4 +1,5 @@
-CC=c99
+CC = c99
+CFLAGS ?= -DHAVE_LINUX_SECCOMP_H
 
 all: fbflut
 
