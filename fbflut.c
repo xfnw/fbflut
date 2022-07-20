@@ -35,6 +35,7 @@ void *handle_connection(void *socket_desc) {
 #ifdef HAVE_LINUX_SECCOMP_H
 	syscall(SYS_seccomp, SECCOMP_SET_MODE_STRICT, 0);
 #endif
+	pthread_detach(pthread_self());
 
 	int sock = *(int*)socket_desc;
 	int read_size;
