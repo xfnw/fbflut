@@ -1,2 +1,6 @@
 fbflut
-fbflut.o
+a.out
+*.orig
+*.o
+*.f
+
