@@ -1,6 +1,4 @@
 
-#define _GNU_SOURCE
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
@@ -75,8 +73,10 @@ void *handle_connection(void *socket_desc) {
 					write(sock, message, strlen(message));
 					continue;
 				} else {
-					//if (strlen(colorcode) < 2*fb_bytes)
-					//	strcat(colorcode, "00");
+#ifdef ALPHA_AT_END
+					if (strlen(colorcode) < 2*fb_bytes)
+						strcat(colorcode, "00");
+#endif
 					int color = (int)strtol(colorcode, NULL, 16);
 					fbdata[ypos*fb_length+xpos] = color;
 				}
