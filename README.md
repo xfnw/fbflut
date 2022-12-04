@@ -24,3 +24,8 @@ framebuffer pixelflut server in C.
   stored in the framebuffer, so be weary of other programs
   writing to it as thats the only copy
 
+## LOSSY compile option
+add `-DLOSSY` to `CFLAGS` in the Makefile to disable waiting
+for incomplete line reads to finish, which can make it
+slightly faster at the expense of losing a couple pixels.
+

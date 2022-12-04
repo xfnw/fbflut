@@ -50,7 +50,11 @@ void *handle_connection(void *socket_desc) {
 				read_to = (uintptr_t)(char *)client_message+read_size;
 			} else {
 				memset(client_message, 0, 36);
-				read_size = recv(sock, client_message, 36, MSG_PEEK | MSG_WAITALL);
+				read_size = recv(sock, client_message, 36, MSG_PEEK
+#ifndef LOSSY
+						| MSG_WAITALL
+#endif
+						);
 				client_message[read_size] = '\0';
 				read_to = (uintptr_t)(char *)strchrnul(client_message, '\n');
 			}
