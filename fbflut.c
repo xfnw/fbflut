@@ -22,8 +22,8 @@
 int fbfd, fb_width, fb_height, fb_length, fb_bytes;
 uint32_t *fbdata;
 
-char *safestrtok(char *str, const char *delim) {
-	char *result = strtok(str, delim);
+char *safestrtok(char *str, const char *delim, char **strtokptr) {
+	char *result = strtok_r(str, delim, strtokptr);
 	if (result == NULL)
 		result="";
 	return result;
@@ -41,7 +41,7 @@ void *handle_connection(void *socket_desc) {
 
 	while ((read_size = recv(sock, client_message, 36, MSG_PEEK)) > 0) {
 		uintptr_t read_to;
-		char *command;
+		char *command, *strtokptr;
 
 		client_message[read_size] = '\0';
 		read_to = (uintptr_t)(char *)strchr(client_message, '\n');
@@ -59,13 +59,13 @@ void *handle_connection(void *socket_desc) {
 		memset(client_message, 0, 36);
 		read_size = recv(sock, client_message, read_to+1, 0);
 
-		command = safestrtok(client_message, " \n");
+		command = safestrtok(client_message, " \n", &strtokptr);
 
 		if (!strcmp("PX", command)) {
-			int xpos = atoi(safestrtok(NULL, " \n"));
-			int ypos = atoi(safestrtok(NULL, " \n"));
+			int xpos = atoi(safestrtok(NULL, " \n", &strtokptr));
+			int ypos = atoi(safestrtok(NULL, " \n", &strtokptr));
 			char colorcode[8];
-			strncpy(colorcode, safestrtok(NULL, " \n"), 8);
+			strncpy(colorcode, safestrtok(NULL, " \n", &strtokptr), 8);
 
 			if (xpos >= 0 && ypos >= 0 && xpos < fb_width && ypos < fb_height) {
 				if (colorcode[0] == '\0') {
