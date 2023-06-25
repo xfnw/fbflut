@@ -1,19 +1,19 @@
 
+#include <arpa/inet.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdint.h>
+#include <linux/fb.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
-#include <sys/mman.h>
-#include <arpa/inet.h>
-#include <linux/fb.h>
 #ifdef HAVE_LINUX_SECCOMP_H
 #include <linux/seccomp.h>
 #endif
@@ -25,7 +25,7 @@ uint32_t *fbdata;
 char *safestrtok(char *str, const char *delim, char **strtokptr) {
 	char *result = strtok_r(str, delim, strtokptr);
 	if (result == NULL)
-		result="";
+		result = "";
 	return result;
 }
 
@@ -35,7 +35,7 @@ void *handle_connection(void *socket_desc) {
 #endif
 	pthread_detach(pthread_self());
 
-	int sock = *(int*)socket_desc;
+	int sock = *(int *)socket_desc;
 	int read_size;
 	char message[37], client_message[37];
 
@@ -47,21 +47,24 @@ void *handle_connection(void *socket_desc) {
 		read_to = (uintptr_t)(char *)strchr(client_message, '\n');
 		if (read_to == 0) {
 			if (read_size == 36) {
-				read_to = (uintptr_t)(char *)client_message+read_size;
+				read_to = (uintptr_t)(char *)client_message +
+					  read_size;
 			} else {
 				memset(client_message, 0, 36);
-				read_size = recv(sock, client_message, 36, MSG_PEEK
+				read_size = recv(sock, client_message, 36,
+						 MSG_PEEK
 #ifndef LOSSY
-						| MSG_WAITALL
+						     | MSG_WAITALL
 #endif
-						);
+				);
 				client_message[read_size] = '\0';
-				read_to = (uintptr_t)(char *)strchrnul(client_message, '\n');
+				read_to = (uintptr_t)(char *)strchrnul(
+				    client_message, '\n');
 			}
 		}
-		read_to = (char *)read_to-client_message;
+		read_to = (char *)read_to - client_message;
 		memset(client_message, 0, 36);
-		read_size = recv(sock, client_message, read_to+1, 0);
+		read_size = recv(sock, client_message, read_to + 1, 0);
 
 		command = safestrtok(client_message, " \n", &strtokptr);
 
@@ -69,20 +72,26 @@ void *handle_connection(void *socket_desc) {
 			int xpos = atoi(safestrtok(NULL, " \n", &strtokptr));
 			int ypos = atoi(safestrtok(NULL, " \n", &strtokptr));
 			char colorcode[8];
-			strncpy(colorcode, safestrtok(NULL, " \n", &strtokptr), 8);
+			strncpy(colorcode, safestrtok(NULL, " \n", &strtokptr),
+				8);
 
-			if (xpos >= 0 && ypos >= 0 && xpos < fb_width && ypos < fb_height) {
+			if (xpos >= 0 && ypos >= 0 && xpos < fb_width &&
+			    ypos < fb_height) {
 				if (colorcode[0] == '\0') {
-					sprintf(message, "PX %i %i %06X\n",xpos,ypos,fbdata[ypos*fb_length+xpos]);
+					sprintf(
+					    message, "PX %i %i %06X\n", xpos,
+					    ypos,
+					    fbdata[ypos * fb_length + xpos]);
 					write(sock, message, strlen(message));
 					continue;
 				} else {
 #ifdef ALPHA_AT_END
-					if (strlen(colorcode) < 2*fb_bytes)
+					if (strlen(colorcode) < 2 * fb_bytes)
 						strcat(colorcode, "00");
 #endif
-					int color = (int)strtol(colorcode, NULL, 16);
-					fbdata[ypos*fb_length+xpos] = color;
+					int color =
+					    (int)strtol(colorcode, NULL, 16);
+					fbdata[ypos * fb_length + xpos] = color;
 				}
 			}
 			continue;
@@ -130,14 +139,15 @@ int main(int argc, char *argv[]) {
 		fb_bytes = vinfo.bits_per_pixel / 8;
 		fb_length = finfo.line_length / fb_bytes;
 
-		printf("width: %i, height: %i, bpp: %i\n", fb_width, fb_height, fb_bytes);
+		printf("width: %i, height: %i, bpp: %i\n", fb_width, fb_height,
+		       fb_bytes);
 
 		int fb_data_size = fb_length * fb_height * fb_bytes;
 
-		fbdata = mmap(0, fb_data_size, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, (off_t)0);
+		fbdata = mmap(0, fb_data_size, PROT_READ | PROT_WRITE,
+			      MAP_SHARED, fbfd, (off_t)0);
 
 		memset(fbdata, 0, fb_data_size); // clear the screen
-
 
 		int socket_desc, client_sock, c;
 		struct sockaddr_in6 server, client;
@@ -152,24 +162,26 @@ int main(int argc, char *argv[]) {
 			struct timeval tv;
 			tv.tv_sec = 60;
 			tv.tv_usec = 0;
-			setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+			setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO,
+				   (const char *)&tv, sizeof tv);
 		}
 
-		if (bind(socket_desc, (struct sockaddr *)&server, sizeof(server)) < 0)
+		if (bind(socket_desc, (struct sockaddr *)&server,
+			 sizeof(server)) < 0)
 			return 15;
 
 		listen(socket_desc, 100);
 		c = sizeof(struct sockaddr_in);
 
-		while (client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) {
+		while (client_sock =
+			   accept(socket_desc, (struct sockaddr *)&client,
+				  (socklen_t *)&c)) {
 			pthread_t thread_id;
 
-			pthread_create(&thread_id, NULL, handle_connection, (void*) &client_sock);
-
+			pthread_create(&thread_id, NULL, handle_connection,
+				       (void *)&client_sock);
 		}
 
 		return 0;
 	}
-
 }
-
