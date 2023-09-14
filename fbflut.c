@@ -53,7 +53,7 @@ static int setup_seccomp() {
 		/* check syscalls */
 		BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
 			 offsetof(struct seccomp_data, nr)),
-		/* allow some */
+
 		ALLOW(close),
 		ALLOW(exit),
 		ALLOW(madvise),
@@ -69,11 +69,11 @@ static int setup_seccomp() {
 				  .filter = filter};
 
 	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
-		perror("seccomp error:");
+		perror("error enabling seccomp");
 		return 1;
 	}
 	if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog)) {
-		perror("seccomp error:");
+		perror("error enabling seccomp");
 		return 2;
 	}
 	return 0;
@@ -108,8 +108,10 @@ void *handle_connection(void *socket_desc) {
 		read_to = (uintptr_t)strchr(client_message, '\n');
 		if (read_to == 0) {
 			if (read_size == 36) {
+				/* line too long, attempt parsing anyways */
 				read_to = (uintptr_t)client_message + read_size;
 			} else {
+				/* line partially read, try reading more */
 				read_size = recv(sock, client_message, 36,
 						 MSG_PEEK
 #ifndef LOSSY
@@ -178,6 +180,8 @@ int main(int argc, const char *argv[]) {
 	if (!port)
 		port = 1234;
 
+	/* FIXME: probably should not hard-code this,
+	 * there may be more than one framebuffer */
 	fbfd = open("/dev/fb0", O_RDWR);
 
 	printf("\033[?25l");
@@ -203,7 +207,8 @@ int main(int argc, const char *argv[]) {
 		fbdata = mmap(0, fb_data_size, PROT_READ | PROT_WRITE,
 			      MAP_SHARED, fbfd, (off_t)0);
 
-		memset(fbdata, 0, fb_data_size); // clear the screen
+		/* clear the screen */
+		memset(fbdata, 0, fb_data_size);
 
 		int socket_desc, client_sock, c;
 		struct sockaddr_in6 server, client;
@@ -215,6 +220,7 @@ int main(int argc, const char *argv[]) {
 		server.sin6_port = htons(port);
 
 		{
+			/* disconnect idle clients */
 			struct timeval tv;
 			tv.tv_sec = 60;
 			tv.tv_usec = 0;
@@ -223,8 +229,10 @@ int main(int argc, const char *argv[]) {
 		}
 
 		if (bind(socket_desc, (struct sockaddr *)&server,
-			 sizeof(server)) < 0)
+			 sizeof(server)) < 0) {
+			perror("failed to bind");
 			return 15;
+		}
 
 		listen(socket_desc, 100);
 		c = sizeof(struct sockaddr_in);
