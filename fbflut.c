@@ -172,7 +172,7 @@ void *handle_connection(void *socket_desc) {
 	return 0;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, const char *argv[]) {
 	int port;
 
 	signal(SIGPIPE, SIG_IGN);
