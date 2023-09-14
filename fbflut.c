@@ -61,10 +61,11 @@ static int setup_seccomp() {
 		ALLOW(recvfrom),
 		ALLOW(rt_sigprocmask),
 		ALLOW(write),
+		ALLOW(writev),
 		/* otherwise kill the process */
 		BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_KILL_PROCESS),
 	};
-	struct sock_fprog prog = {.len = sizeof(filter) / sizeof(filter[0]),
+	struct sock_fprog prog = {.len = sizeof(filter) / sizeof(*filter),
 				  .filter = filter};
 
 	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
@@ -79,7 +80,7 @@ static int setup_seccomp() {
 }
 #endif
 
-int fbfd, fb_width, fb_height, fb_length, fb_bytes;
+int fbfd, fb_width, fb_height, fb_length, fb_bytes, fb_hexbytes;
 uint32_t *fbdata;
 
 char *safestrtok(char *str, const char *delim, char **strtokptr) {
@@ -97,20 +98,18 @@ void *handle_connection(void *socket_desc) {
 
 	int sock = *(int *)socket_desc;
 	int read_size;
-	char message[37], client_message[37];
+	char message[37], client_message[45];
 
 	while ((read_size = recv(sock, client_message, 36, MSG_PEEK)) > 0) {
 		uintptr_t read_to;
 		char *command, *strtokptr;
 
 		client_message[read_size] = '\0';
-		read_to = (uintptr_t)(char *)strchr(client_message, '\n');
+		read_to = (uintptr_t)strchr(client_message, '\n');
 		if (read_to == 0) {
 			if (read_size == 36) {
-				read_to = (uintptr_t)(char *)client_message +
-					  read_size;
+				read_to = (uintptr_t)client_message + read_size;
 			} else {
-				memset(client_message, 0, 36);
 				read_size = recv(sock, client_message, 36,
 						 MSG_PEEK
 #ifndef LOSSY
@@ -118,12 +117,11 @@ void *handle_connection(void *socket_desc) {
 #endif
 				);
 				client_message[read_size] = '\0';
-				read_to = (uintptr_t)(char *)strchrnul(
-				    client_message, '\n');
+				read_to =
+				    (uintptr_t)strchrnul(client_message, '\n');
 			}
 		}
-		read_to = (char *)read_to - client_message;
-		memset(client_message, 0, 36);
+		read_to = read_to - (uintptr_t)client_message;
 		read_size = recv(sock, client_message, read_to + 1, 0);
 
 		command = safestrtok(client_message, " \n", &strtokptr);
@@ -131,13 +129,11 @@ void *handle_connection(void *socket_desc) {
 		if (!strcmp("PX", command)) {
 			int xpos = atoi(safestrtok(NULL, " \n", &strtokptr));
 			int ypos = atoi(safestrtok(NULL, " \n", &strtokptr));
-			char colorcode[8];
-			strncpy(colorcode, safestrtok(NULL, " \n", &strtokptr),
-				8);
+			char *colorcode = strtok_r(NULL, " \n", &strtokptr);
 
 			if (xpos >= 0 && ypos >= 0 && xpos < fb_width &&
 			    ypos < fb_height) {
-				if (colorcode[0] == '\0') {
+				if (colorcode == NULL) {
 					sprintf(
 					    message, "PX %i %i %06X\n", xpos,
 					    ypos,
@@ -145,8 +141,9 @@ void *handle_connection(void *socket_desc) {
 					write(sock, message, strlen(message));
 					continue;
 				} else {
+					colorcode[fb_hexbytes] = '\0';
 #ifdef ALPHA_AT_END
-					if (strlen(colorcode) < 2 * fb_bytes)
+					if (strlen(colorcode) < fb_hexbytes)
 						strcat(colorcode, "00");
 #endif
 					int color =
@@ -166,8 +163,6 @@ void *handle_connection(void *socket_desc) {
 			write(sock, message, strlen(message));
 			continue;
 		}
-
-		memset(client_message, 0, 36);
 	}
 
 	close(sock);
@@ -185,7 +180,7 @@ int main(int argc, const char *argv[]) {
 
 	fbfd = open("/dev/fb0", O_RDWR);
 
-	printf("\e[?25l");
+	printf("\033[?25l");
 
 	if (fbfd >= 0) {
 		struct fb_var_screeninfo vinfo;
@@ -198,6 +193,7 @@ int main(int argc, const char *argv[]) {
 		fb_height = vinfo.yres;
 		fb_bytes = vinfo.bits_per_pixel / 8;
 		fb_length = finfo.line_length / fb_bytes;
+		fb_hexbytes = fb_bytes * 2;
 
 		printf("width: %i, height: %i, bpp: %i\n", fb_width, fb_height,
 		       fb_bytes);
@@ -233,9 +229,9 @@ int main(int argc, const char *argv[]) {
 		listen(socket_desc, 100);
 		c = sizeof(struct sockaddr_in);
 
-		while (client_sock =
-			   accept(socket_desc, (struct sockaddr *)&client,
-				  (socklen_t *)&c)) {
+		while ((client_sock =
+			    accept(socket_desc, (struct sockaddr *)&client,
+				   (socklen_t *)&c))) {
 			pthread_t thread_id;
 
 			pthread_create(&thread_id, NULL, handle_connection,
