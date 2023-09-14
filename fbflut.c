@@ -58,6 +58,7 @@ static int setup_seccomp() {
 		ALLOW(exit),
 		ALLOW(madvise),
 		ALLOW(munmap),
+		ALLOW(recv),
 		ALLOW(recvfrom),
 		ALLOW(rt_sigprocmask),
 		ALLOW(write),
