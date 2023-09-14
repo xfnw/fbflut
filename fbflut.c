@@ -13,6 +13,7 @@
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <unistd.h>
 #ifdef HAVE_LINUX_SECCOMP_H
 #include <linux/audit.h>
 #include <linux/filter.h>
@@ -56,6 +57,7 @@ static int setup_seccomp() {
 		ALLOW(close),
 		ALLOW(exit),
 		ALLOW(madvise),
+		ALLOW(munmap),
 		ALLOW(recvfrom),
 		ALLOW(rt_sigprocmask),
 		ALLOW(write),
