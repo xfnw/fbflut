@@ -12,12 +12,70 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
-#include <sys/syscall.h>
 #include <sys/time.h>
 #ifdef HAVE_LINUX_SECCOMP_H
+#include <linux/audit.h>
+#include <linux/filter.h>
 #include <linux/seccomp.h>
+#include <stddef.h>
+#include <sys/prctl.h>
+#include <sys/syscall.h>
+
+#define ALLOW(syscall)                                                         \
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, SYS_##syscall, 0, 1),              \
+	    BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_ALLOW)
+
+static int setup_seccomp() {
+	struct sock_filter filter[] = {
+		/* check if architecture is the same as what we
+		 * were compiled with */
+		BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
+			 offsetof(struct seccomp_data, arch)),
+		BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K,
+#if defined(__x86_64__)
+			 AUDIT_ARCH_X86_64,
+#elif defined(__i386__)
+			 AUDIT_ARCH_I386,
+#elif defined(__riscv) && __riscv_xlen == 64
+			 AUDIT_ARCH_RISCV64,
+#elif defined(__riscv) && __riscv_xlen == 32
+			 AUDIT_ARCH_RISCV32,
+#elif defined(__arm__)
+			 AUDIT_ARCH_ARM,
+#elif defined(__aarch64__)
+			 AUDIT_ARCH_AARCH64,
+#else
+#error unknown architecture, file a bug or turn off seccomp
 #endif
-#include <unistd.h>
+			 1, 0),
+		BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_KILL_PROCESS),
+		/* check syscalls */
+		BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
+			 offsetof(struct seccomp_data, nr)),
+		/* allow some */
+		ALLOW(close),
+		ALLOW(exit),
+		ALLOW(madvise),
+		ALLOW(recvfrom),
+		ALLOW(rt_sigprocmask),
+		ALLOW(write),
+		/* otherwise kill the process */
+		BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_KILL_PROCESS),
+	};
+	struct sock_fprog prog = {.len = sizeof(filter) / sizeof(filter[0]),
+				  .filter = filter};
+
+	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
+		perror("seccomp error:");
+		return 1;
+	}
+	if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog)) {
+		perror("seccomp error:");
+		return 2;
+	}
+	return 0;
+}
+#endif
 
 int fbfd, fb_width, fb_height, fb_length, fb_bytes;
 uint32_t *fbdata;
@@ -31,7 +89,7 @@ char *safestrtok(char *str, const char *delim, char **strtokptr) {
 
 void *handle_connection(void *socket_desc) {
 #ifdef HAVE_LINUX_SECCOMP_H
-	syscall(SYS_seccomp, SECCOMP_SET_MODE_STRICT, 0);
+	setup_seccomp();
 #endif
 	pthread_detach(pthread_self());
 
