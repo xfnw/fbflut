@@ -187,68 +187,67 @@ int main(int argc, const char *argv[]) {
 	 * there may be more than one framebuffer */
 	fbfd = open("/dev/fb0", O_RDWR);
 
-	printf("\033[?25l");
-
-	if (fbfd >= 0) {
-		struct fb_var_screeninfo vinfo;
-		struct fb_fix_screeninfo finfo;
-
-		ioctl(fbfd, FBIOGET_VSCREENINFO, &vinfo);
-		ioctl(fbfd, FBIOGET_FSCREENINFO, &finfo);
-
-		fb_width = vinfo.xres;
-		fb_height = vinfo.yres;
-		fb_bytes = vinfo.bits_per_pixel / 8;
-		fb_length = finfo.line_length / fb_bytes;
-		fb_hexbytes = fb_bytes * 2;
-
-		printf("width: %i, height: %i, bpp: %i\n", fb_width, fb_height,
-		       fb_bytes);
-
-		int fb_data_size = fb_length * fb_height * fb_bytes;
-
-		fbdata = mmap(0, fb_data_size, PROT_READ | PROT_WRITE,
-			      MAP_SHARED, fbfd, (off_t)0);
-
-		/* clear the screen */
-		memset(fbdata, 0, fb_data_size);
-
-		int socket_desc, client_sock, c;
-		struct sockaddr_in6 server, client;
-
-		socket_desc = socket(AF_INET6, SOCK_STREAM, 0);
-
-		server.sin6_family = AF_INET6;
-		server.sin6_addr = in6addr_any;
-		server.sin6_port = htons(port);
-
-		{
-			/* disconnect idle clients */
-			struct timeval tv;
-			tv.tv_sec = 60;
-			tv.tv_usec = 0;
-			setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO,
-				   (const char *)&tv, sizeof tv);
-		}
-
-		if (bind(socket_desc, (struct sockaddr *)&server,
-			 sizeof(server)) < 0) {
-			perror("failed to bind");
-			return 15;
-		}
-
-		listen(socket_desc, 100);
-		c = sizeof(struct sockaddr_in);
-
-		while ((client_sock =
-			    accept(socket_desc, (struct sockaddr *)&client,
-				   (socklen_t *)&c))) {
-			pthread_t thread_id;
-
-			pthread_create(&thread_id, NULL, handle_connection,
-				       (void *)&client_sock);
-		}
-
-		return 0;
+	if (fbfd < 0) {
+		perror("failed to open framebuffer");
+		return 2;
 	}
+
+	struct fb_var_screeninfo vinfo;
+	struct fb_fix_screeninfo finfo;
+
+	ioctl(fbfd, FBIOGET_VSCREENINFO, &vinfo);
+	ioctl(fbfd, FBIOGET_FSCREENINFO, &finfo);
+
+	fb_width = vinfo.xres;
+	fb_height = vinfo.yres;
+	fb_bytes = vinfo.bits_per_pixel / 8;
+	fb_length = finfo.line_length / fb_bytes;
+	fb_hexbytes = fb_bytes * 2;
+
+	printf("\033[?25lwidth: %i, height: %i, bpp: %i\n", fb_width, fb_height,
+	       fb_bytes);
+
+	int fb_data_size = fb_length * fb_height * fb_bytes;
+
+	fbdata = mmap(0, fb_data_size, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd,
+		      (off_t)0);
+
+	/* clear the screen */
+	memset(fbdata, 0, fb_data_size);
+
+	int socket_desc, client_sock, c;
+	struct sockaddr_in6 server, client;
+
+	socket_desc = socket(AF_INET6, SOCK_STREAM, 0);
+
+	server.sin6_family = AF_INET6;
+	server.sin6_addr = in6addr_any;
+	server.sin6_port = htons(port);
+
+	{
+		/* disconnect idle clients */
+		struct timeval tv;
+		tv.tv_sec = 60;
+		tv.tv_usec = 0;
+		setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO,
+			   (const char *)&tv, sizeof tv);
+	}
+
+	if (bind(socket_desc, (struct sockaddr *)&server, sizeof(server)) < 0) {
+		perror("failed to bind");
+		return 15;
+	}
+
+	listen(socket_desc, 100);
+	c = sizeof(struct sockaddr_in);
+
+	while ((client_sock = accept(socket_desc, (struct sockaddr *)&client,
+				     (socklen_t *)&c))) {
+		pthread_t thread_id;
+
+		pthread_create(&thread_id, NULL, handle_connection,
+			       (void *)&client_sock);
+	}
+
+	return 0;
 }
