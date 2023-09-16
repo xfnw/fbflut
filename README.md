@@ -13,8 +13,6 @@ framebuffer pixelflut server in C.
 - connect with netcat or something, the default port is 1234
 
 ## caveats
-- on arm and places with a weird dynamic linker, you may need
-  to change `-lpthread` to `-pthread` in the Makefile
 - this writes provided colors directly to your framebuffer,
   meaning it inherits the color format. if your system is
   big-endian, or if your color format is weird, you may need
