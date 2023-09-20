@@ -101,7 +101,7 @@ void *handle_connection(void *socket_desc) {
 
 	int sock = *(int *)socket_desc;
 	int read_size;
-	char message[37], client_message[45];
+	char client_message[45];
 
 	while ((read_size = recv(sock, client_message, 36, MSG_PEEK)) > 0) {
 		uintptr_t read_to;
@@ -139,11 +139,9 @@ void *handle_connection(void *socket_desc) {
 			if (xpos >= 0 && ypos >= 0 && xpos < fb_width &&
 			    ypos < fb_height) {
 				if (colorcode == NULL) {
-					sprintf(
-					    message, "PX %i %i %06X\n", xpos,
-					    ypos,
+					dprintf(
+					    sock, "PX %i %i %06X\n", xpos, ypos,
 					    fbdata[ypos * fb_length + xpos]);
-					write(sock, message, strlen(message));
 					continue;
 				} else {
 					colorcode[fb_hexbytes] = '\0';
@@ -159,13 +157,11 @@ void *handle_connection(void *socket_desc) {
 			continue;
 		}
 		if (!strcmp("SIZE", command)) {
-			sprintf(message, "SIZE %i %i\n", fb_width, fb_height);
-			write(sock, message, strlen(message));
+			dprintf(sock, "SIZE %i %i\n", fb_width, fb_height);
 			continue;
 		}
 		if (!strcmp("HELP", command)) {
-			memcpy(message, "HELP\nSIZE\nPX x y [color]\n", 26);
-			write(sock, message, strlen(message));
+			write(sock, "HELP\nSIZE\nPX x y [color]\n", 26);
 			continue;
 		}
 	}
