@@ -200,8 +200,9 @@ int main(int argc, const char *argv[]) {
 	fb_length = finfo.line_length / fb_bytes;
 	fb_hexbytes = fb_bytes * 2;
 
-	printf("\033[?25lwidth: %i, height: %i, bpp: %i\n", fb_width, fb_height,
-	       fb_bytes);
+	/* turn off cursor blinking in the tty */
+	printf("\033[?17;127cwidth: %i, height: %i, bpp: %i\n", fb_width,
+	       fb_height, fb_bytes);
 
 	int fb_data_size = fb_length * fb_height * fb_bytes;
 
