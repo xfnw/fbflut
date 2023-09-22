@@ -161,7 +161,7 @@ void *handle_connection(void *socket_desc) {
 			continue;
 		}
 		if (!strcmp("HELP", command)) {
-			write(sock, "HELP\nSIZE\nPX x y [color]\n", 26);
+			write(sock, "HELP\nSIZE\nPX x y [color]\n", 25);
 			continue;
 		}
 	}
