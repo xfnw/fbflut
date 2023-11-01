@@ -128,6 +128,7 @@ void *handle_connection(void *socket_desc) {
 		}
 		read_to = read_to - (uintptr_t)client_message;
 		read_size = recv(sock, client_message, read_to + 1, 0);
+		client_message[read_size] = '\0';
 
 		command = safestrtok(client_message, " \n", &strtokptr);
 
