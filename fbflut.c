@@ -22,8 +22,8 @@
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 
-#define ALLOW(syscall)                                                         \
-	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, SYS_##syscall, 0, 1),              \
+#define ALLOW(syscall) \
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, SYS_##syscall, 0, 1), \
 	    BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_ALLOW)
 
 static int setup_seccomp() {
@@ -146,16 +146,14 @@ void *handle_connection(void *socket_desc) {
 					    fbdata[ypos * fb_length + xpos]);
 					write(sock, message, message_len);
 					continue;
-				} else {
-					colorcode[fb_hexbytes] = '\0';
-#ifdef ALPHA_AT_END
-					if (strlen(colorcode) < fb_hexbytes)
-						strcat(colorcode, "00");
-#endif
-					int color =
-					    (int)strtol(colorcode, NULL, 16);
-					fbdata[ypos * fb_length + xpos] = color;
 				}
+				colorcode[fb_hexbytes] = '\0';
+#ifdef ALPHA_AT_END
+				if (strlen(colorcode) < fb_hexbytes)
+					strcat(colorcode, "00");
+#endif
+				int color = (int)strtol(colorcode, NULL, 16);
+				fbdata[ypos * fb_length + xpos] = color;
 			}
 			continue;
 		}
