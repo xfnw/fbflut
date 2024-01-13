@@ -34,7 +34,7 @@ def flutsend(img,ox,oy):
 
 def fluttext(text,x,y,width=1024):
 
-    img = pyvips.Image.text(text,dpi=150,width=width)
+    img = pyvips.Image.text(text,dpi=150,font='monospace',width=width)
 
     flutsend(img,x,y)
 
