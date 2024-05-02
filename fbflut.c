@@ -26,47 +26,47 @@
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, SYS_##syscall, 0, 1), \
 	    BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_ALLOW)
 
-static int setup_seccomp() {
-	struct sock_filter filter[] = {
-		/* check if architecture is the same as what we
-		 * were compiled with */
-		BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
-			 offsetof(struct seccomp_data, arch)),
-		BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K,
 #if defined(__x86_64__)
-			 AUDIT_ARCH_X86_64,
+#define MY_AUDIT_ARCH AUDIT_ARCH_X86_64
 #elif defined(__i386__)
-			 AUDIT_ARCH_I386,
+#define MY_AUDIT_ARCH AUDIT_ARCH_I386
 #elif defined(__riscv) && __riscv_xlen == 64
-			 AUDIT_ARCH_RISCV64,
+#define MY_AUDIT_ARCH AUDIT_ARCH_RISCV64
 #elif defined(__riscv) && __riscv_xlen == 32
-			 AUDIT_ARCH_RISCV32,
+#define MY_AUDIT_ARCH AUDIT_ARCH_RISCV32
 #elif defined(__arm__)
-			 AUDIT_ARCH_ARM,
+#define MY_AUDIT_ARCH AUDIT_ARCH_ARM
 #elif defined(__aarch64__)
-			 AUDIT_ARCH_AARCH64,
+#define MY_AUDIT_ARCH AUDIT_ARCH_AARCH64
 #else
 #error unknown architecture, file a bug or turn off seccomp
 #endif
-			 1, 0),
-		BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_KILL_PROCESS),
-		/* check syscalls */
-		BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
-			 offsetof(struct seccomp_data, nr)),
 
-		ALLOW(close),
-		ALLOW(exit),
-		ALLOW(madvise),
-		ALLOW(munmap),
+static int setup_seccomp() {
+	struct sock_filter filter[] = {
+	    /* check if architecture is the same as what we
+	     * were compiled with */
+	    BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
+		     offsetof(struct seccomp_data, arch)),
+	    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, MY_AUDIT_ARCH, 1, 0),
+	    BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_KILL_PROCESS),
+	    /* check syscalls */
+	    BPF_STMT(BPF_LD + BPF_W + BPF_ABS,
+		     offsetof(struct seccomp_data, nr)),
+
+	    ALLOW(close),
+	    ALLOW(exit),
+	    ALLOW(madvise),
+	    ALLOW(munmap),
 #ifdef __NR_recv
-		ALLOW(recv),
+	    ALLOW(recv),
 #endif
-		ALLOW(recvfrom),
-		ALLOW(rt_sigprocmask),
-		ALLOW(write),
-		ALLOW(writev),
-		/* otherwise kill the process */
-		BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_KILL_PROCESS),
+	    ALLOW(recvfrom),
+	    ALLOW(rt_sigprocmask),
+	    ALLOW(write),
+	    ALLOW(writev),
+	    /* otherwise kill the process */
+	    BPF_STMT(BPF_RET + BPF_K, SECCOMP_RET_KILL_PROCESS),
 	};
 	struct sock_fprog prog = {.len = sizeof(filter) / sizeof(*filter),
 				  .filter = filter};
