@@ -84,7 +84,10 @@ static int setup_seccomp() {
 #endif
 
 int fbfd, fb_width, fb_height, fb_length, fb_bytes, fb_hexbytes;
-uint32_t *fbdata;
+
+#define DECLARE_FBDATA2(size) uint##size##_t *fbdata;
+#define DECLARE_FBDATA(size) DECLARE_FBDATA2(size)
+DECLARE_FBDATA(PIXELSIZE)
 
 char *safestrtok(char *str, const char *delim, char **strtokptr) {
 	char *result = strtok_r(str, delim, strtokptr);
@@ -202,6 +205,13 @@ int main(int argc, const char *argv[]) {
 	fb_bytes = vinfo.bits_per_pixel / 8;
 	fb_length = finfo.line_length / fb_bytes;
 	fb_hexbytes = fb_bytes * 2;
+
+	if (fb_bytes != sizeof *fbdata) {
+		printf("compiled with -DPIXELSIZE=%i bits per pixel, "
+		       "but framebuffer wants %i\n",
+		       8 * sizeof(*fbdata), vinfo.bits_per_pixel);
+		return 12;
+	}
 
 	/* turn off cursor blinking in the tty */
 	printf("\033[?17;127cwidth: %i, height: %i, bpp: %i\n", fb_width,
