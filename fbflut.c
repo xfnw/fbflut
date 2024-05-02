@@ -227,6 +227,16 @@ int main(int argc, const char *argv[]) {
 	memset(fbdata, 0, fb_data_size);
 
 	int socket_desc, client_sock, c;
+
+#ifdef LECACY_IP_ONLY
+	struct sockaddr_in server, client;
+
+	socket_desc = socket(AF_INET, SOCK_STREAM, 0);
+
+	server.sin_family = AF_INET;
+	server.sin_addr.s_addr = htonl(INADDR_ANY);
+	server.sin_port = htons(port);
+#else
 	struct sockaddr_in6 server, client;
 
 	socket_desc = socket(AF_INET6, SOCK_STREAM, 0);
@@ -234,6 +244,7 @@ int main(int argc, const char *argv[]) {
 	server.sin6_family = AF_INET6;
 	server.sin6_addr = in6addr_any;
 	server.sin6_port = htons(port);
+#endif
 
 	{
 		/* disconnect idle clients */
