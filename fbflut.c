@@ -208,7 +208,7 @@ int main(int argc, const char *argv[]) {
 	fb_hexbytes = fb_bytes * 2;
 
 	if (fb_bytes != sizeof *fbdata) {
-		printf("compiled with -DPIXELSIZE=%i bits per pixel, "
+		printf("compiled with -DPIXELSIZE=%li bits per pixel, "
 		       "but framebuffer wants %i\n",
 		       8 * sizeof(*fbdata), vinfo.bits_per_pixel);
 		return 12;
