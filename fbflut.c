@@ -105,35 +105,25 @@ void *handle_connection(void *socket_desc) {
 	pthread_detach(pthread_self());
 
 	int sock = *(int *)socket_desc;
-	int read_size, message_len;
-	char message[37], client_message[45];
+	int read_size = 0, message_len;
+	char message[37], client_message[37] = "";
+	char *offset = client_message;
+	char *end_message = offset + 36;
 
-	while ((read_size = recv(sock, client_message, 36, MSG_PEEK)) > 0) {
-		uintptr_t read_to;
-		char *command, *strtokptr;
+	while (strchr(client_message, '\n') ||
+	       (read_size = recv(sock, offset, end_message - offset, 0)) > 0) {
+		char *newline, *command, *strtokptr;
 
-		client_message[read_size] = '\0';
-		read_to = (uintptr_t)strchr(client_message, '\n');
-		if (read_to == 0) {
-			if (read_size == 36) {
-				/* line too long, attempt parsing anyways */
-				read_to = (uintptr_t)client_message + read_size;
-			} else {
-				/* line partially read, try reading more */
-				read_size = recv(sock, client_message, 36,
-						 MSG_PEEK
-#ifndef LOSSY
-						     | MSG_WAITALL
-#endif
-				);
-				client_message[read_size] = '\0';
-				read_to =
-				    (uintptr_t)strchrnul(client_message, '\n');
-			}
+		offset += read_size;
+		*offset = '\0';
+		newline = strchr(client_message, '\n');
+
+		if (newline) {
+			*newline = '\0';
+		} else if (offset < end_message) {
+			read_size = 0;
+			continue;
 		}
-		read_to = read_to - (uintptr_t)client_message;
-		read_size = recv(sock, client_message, read_to + 1, 0);
-		client_message[read_size] = '\0';
 
 		command = safestrtok(client_message, " \n", &strtokptr);
 
@@ -150,28 +140,36 @@ void *handle_connection(void *socket_desc) {
 					    ypos,
 					    fbdata[ypos * fb_length + xpos]);
 					write(sock, message, message_len);
-					continue;
+					goto reset_line;
 				}
-				colorcode[fb_hexbytes] = '\0';
-#ifdef ALPHA_AT_END
-				if (strlen(colorcode) < fb_hexbytes)
-					strcat(colorcode, "00");
-#endif
+				/* TODO: re-implement ALPHA_AT_END */
+
 				fbdata[ypos * fb_length + xpos] =
 				    (FBDATA_T)strtol(colorcode, NULL, 16);
 			}
-			continue;
+			goto reset_line;
 		}
 		if (!strcmp("SIZE", command)) {
 			message_len = sprintf(message, "SIZE %i %i\n", fb_width,
 					      fb_height);
 			write(sock, message, message_len);
-			continue;
+			goto reset_line;
 		}
 		if (!strcmp("HELP", command)) {
 			write(sock, "HELP\nSIZE\nPX x y [color]\n", 25);
-			continue;
+			goto reset_line;
 		}
+
+	reset_line:
+		read_size = 0;
+		if (newline) {
+			memmove(client_message, newline + 1,
+				offset - newline - 1);
+			offset = offset - newline - 1 + client_message;
+		} else {
+			offset = client_message;
+		}
+		*offset = '\0';
 	}
 
 	close(sock);
