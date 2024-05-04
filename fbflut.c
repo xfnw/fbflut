@@ -108,7 +108,7 @@ void *handle_connection(void *socket_desc) {
 	int read_size = 0, message_len;
 	char message[37], client_message[37] = "";
 	char *offset = client_message;
-	char *end_message = offset + 36;
+	const char *end_message = offset + 36;
 
 	while (strchr(client_message, '\n') ||
 	       (read_size = recv(sock, offset, end_message - offset, 0)) > 0) {
@@ -130,7 +130,8 @@ void *handle_connection(void *socket_desc) {
 		if (!strcmp("PX", command)) {
 			int xpos = atoi(safestrtok(NULL, " \n", &strtokptr));
 			int ypos = atoi(safestrtok(NULL, " \n", &strtokptr));
-			char *colorcode = strtok_r(NULL, " \n", &strtokptr);
+			const char *colorcode =
+			    strtok_r(NULL, " \n", &strtokptr);
 
 			if (xpos >= 0 && ypos >= 0 && xpos < fb_width &&
 			    ypos < fb_height) {
@@ -207,7 +208,7 @@ int main(int argc, const char *argv[]) {
 	fb_hexbytes = fb_bytes * 2;
 
 	if (fb_bytes != sizeof *fbdata) {
-		printf("compiled with -DPIXELSIZE=%li bits per pixel, "
+		printf("compiled with -DPIXELSIZE=%zu bits per pixel, "
 		       "but framebuffer wants %i\n",
 		       8 * sizeof(*fbdata), vinfo.bits_per_pixel);
 		return 12;
