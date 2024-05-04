@@ -86,9 +86,10 @@ static int setup_seccomp() {
 
 int fbfd, fb_width, fb_height, fb_length, fb_bytes, fb_hexbytes;
 
-#define DECLARE_FBDATA2(size) uint##size##_t *fbdata;
+#define DECLARE_FBDATA2(size) uint##size##_t
 #define DECLARE_FBDATA(size) DECLARE_FBDATA2(size)
-DECLARE_FBDATA(PIXELSIZE)
+#define FBDATA_T DECLARE_FBDATA(PIXELSIZE)
+FBDATA_T *fbdata;
 
 char *safestrtok(char *str, const char *delim, char **strtokptr) {
 	char *result = strtok_r(str, delim, strtokptr);
@@ -156,8 +157,8 @@ void *handle_connection(void *socket_desc) {
 				if (strlen(colorcode) < fb_hexbytes)
 					strcat(colorcode, "00");
 #endif
-				int color = (int)strtol(colorcode, NULL, 16);
-				fbdata[ypos * fb_length + xpos] = color;
+				fbdata[ypos * fb_length + xpos] =
+				    (FBDATA_T)strtol(colorcode, NULL, 16);
 			}
 			continue;
 		}
