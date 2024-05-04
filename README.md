@@ -14,16 +14,8 @@ framebuffer pixelflut server in C.
 
 ## caveats
 - this writes provided colors directly to your framebuffer,
-  meaning it inherits the color format. if your system is
-  big-endian, or if your color format is weird, you may need
-  to add `-DALPHA_AT_END` to `CFLAGS` in the Makefile to
-  allow omitting alpha in `PX` commands
+  meaning it inherits the color format.
 - fbflut does not store its own buffer, the canvas is
   entirely mmapped to the framebuffer, so be weary of other
   programs writing to it
-
-## LOSSY compile option
-add `-DLOSSY` to `CFLAGS` in the Makefile to disable waiting
-for incomplete line reads to finish, which can make it
-slightly faster at the expense of losing a couple pixels.
 
