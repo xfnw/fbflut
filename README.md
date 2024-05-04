@@ -19,3 +19,8 @@ framebuffer pixelflut server in C.
   entirely mmapped to the framebuffer, so be weary of other
   programs writing to it
 
+## PIXELSIZE compile option
+for performance reasons, the bit depth can only be changed
+at compile time. if your framebuffer is not using 32 bits
+per pixel, this can be changed via `PIXELSIZE` in Makefile.
+
