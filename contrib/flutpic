@@ -8,7 +8,10 @@ def rgb2hex(r, g, b, *a):
         return None
     return '{:02x}{:02x}{:02x}'.format(r,g,b)
 
-i = Image.open(sys.argv[1],'r')
+inp = sys.argv[1]
+if inp == '-':
+    inp = sys.stdin.buffer
+i = Image.open(inp,'r')
 w, h = i.size
 p = list(i.getdata())
 
