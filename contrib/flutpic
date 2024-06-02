@@ -5,7 +5,7 @@ import sys
 
 def rgb2hex(r, g, b, *a):
     if len(a) > 0 and a[0] == 0:
-        return ''
+        return None
     return '{:02x}{:02x}{:02x}'.format(r,g,b)
 
 i = Image.open(sys.argv[1],'r')
@@ -14,4 +14,5 @@ p = list(i.getdata())
 
 for y in range(h):
     for x in range(w):
-        print(f"PX {x+int(sys.argv[2])} {y+int(sys.argv[3])} {rgb2hex(*p[y*w+x])}")
+        if (hex := rgb2hex(*p[y*w+x])) is not None:
+            print(f"PX {x+int(sys.argv[2])} {y+int(sys.argv[3])} {hex}")
