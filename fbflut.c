@@ -112,7 +112,8 @@ void *handle_connection(void *socket_desc) {
 
 	while (strchr(client_message, '\n') ||
 	       (read_size = recv(sock, offset, end_message - offset, 0)) > 0) {
-		char *newline, *command, *strtokptr;
+		char *newline, *strtokptr;
+		const char *command;
 
 		offset += read_size;
 		*offset = '\0';
