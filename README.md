@@ -9,7 +9,7 @@ framebuffer pixelflut server in C.
   to the framebuffer (ie put yourself in the `video` group)
 - go in something that wont fight you for the framebuffer,
   ie a tty
-- do `./fbflut` (or `./fbflut <port>`)
+- do `./fbflut` (or `./fbflut [port] [framebuffer]`)
 - connect with netcat or something, the default port is 1234
 
 ## caveats

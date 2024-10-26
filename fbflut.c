@@ -180,16 +180,16 @@ void *handle_connection(void *socket_desc) {
 
 int main(int argc, const char *argv[]) {
 	int port;
+	const char *fbpath;
 
 	signal(SIGPIPE, SIG_IGN);
 
 	port = argc > 1 ? atoi(argv[1]) : 0;
 	if (!port)
 		port = 1234;
+	fbpath = argc > 2 ? argv[2] : "/dev/fb0";
 
-	/* FIXME: probably should not hard-code this,
-	 * there may be more than one framebuffer */
-	fbfd = open("/dev/fb0", O_RDWR);
+	fbfd = open(fbpath, O_RDWR);
 
 	if (fbfd < 0) {
 		perror("failed to open framebuffer");
