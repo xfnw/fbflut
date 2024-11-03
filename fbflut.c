@@ -227,10 +227,11 @@ int main(int argc, const char *argv[]) {
 	/* clear the screen */
 	memset(fbdata, 0, fb_data_size);
 
-	int socket_desc, client_sock, c;
+	int socket_desc, client_sock;
 
 #ifdef LECACY_IP_ONLY
-	struct sockaddr_in server, client;
+	struct sockaddr_in server;
+	memset(&server, 0, sizeof(server));
 
 	socket_desc = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -238,7 +239,8 @@ int main(int argc, const char *argv[]) {
 	server.sin_addr.s_addr = htonl(INADDR_ANY);
 	server.sin_port = htons(port);
 #else
-	struct sockaddr_in6 server, client;
+	struct sockaddr_in6 server;
+	memset(&server, 0, sizeof(server));
 
 	socket_desc = socket(AF_INET6, SOCK_STREAM, 0);
 
@@ -262,10 +264,8 @@ int main(int argc, const char *argv[]) {
 	}
 
 	listen(socket_desc, 100);
-	c = sizeof(struct sockaddr_in);
 
-	while ((client_sock = accept(socket_desc, (struct sockaddr *)&client,
-				     (socklen_t *)&c))) {
+	while ((client_sock = accept(socket_desc, NULL, NULL))) {
 		pthread_t thread_id;
 
 		pthread_create(&thread_id, NULL, handle_connection,
