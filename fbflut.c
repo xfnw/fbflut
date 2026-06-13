@@ -224,8 +224,9 @@ int main(int argc, const char *argv[]) {
 	fbdata = mmap(0, fb_data_size, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd,
 		      (off_t)0);
 
-	/* clear the screen */
+#ifdef CLEAR_SCREEN_ON_STARTUP
 	memset(fbdata, 0, fb_data_size);
+#endif
 
 	int socket_desc, client_sock;
 
